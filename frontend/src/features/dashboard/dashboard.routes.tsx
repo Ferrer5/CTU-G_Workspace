@@ -3,7 +3,7 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import { PERMISSIONS } from '../../permissions';
 import PermissionRoute from '../../routes/PermissionRoute';
 import DashboardSidebar from './components/DashboardSidebar';
-import DashboardPage from './pages/DashboardPage';
+import DashboardIndexPage from './pages/DashboardIndexPage';
 import ServicePage from './pages/ServicePage';
 import FinancePage from '../finance/pages/FinancePage';
 import StudentProfilePage from '../student/pages/StudentProfilePage';
@@ -29,7 +29,7 @@ export const dashboardRoutes = (
         </PermissionRoute>
       }
     >
-      <Route index element={<DashboardPage />} />
+      <Route index element={<DashboardIndexPage />} />
       <Route
         path="profile"
         element={
