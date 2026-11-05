@@ -5,12 +5,17 @@ import PermissionRoute from '../../routes/PermissionRoute';
 import DashboardSidebar from './components/DashboardSidebar';
 import DashboardPage from './pages/DashboardPage';
 import ServicePage from './pages/ServicePage';
+import FinancePage from '../finance/pages/FinancePage';
 import StudentProfilePage from '../student/pages/StudentProfilePage';
 import { dashboardServices } from './dashboardConfig';
 
 const serviceRoute = (service: (typeof dashboardServices)[number]) => (
   <PermissionRoute requiredPermissions={service.permissions} mode="any">
-    <ServicePage title={service.label} description={service.description} />
+    {service.serviceCode === 'finance' ? (
+      <FinancePage title={service.label} description={service.description} />
+    ) : (
+      <ServicePage title={service.label} description={service.description} />
+    )}
   </PermissionRoute>
 );
 

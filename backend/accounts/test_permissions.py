@@ -99,9 +99,14 @@ class PermissionResolverTests(APITestCase):
             self.first_permission,
             AccountPermission.Effect.DENY,
         )
+        expected_superuser_codes = set(
+            Permission.objects.filter(service__is_active=True)
+            .exclude(permission_code="test.item.view")
+            .values_list("permission_code", flat=True)
+        )
         self.assertEqual(
             get_effective_permission_codes(superuser),
-            {"test.item.edit"},
+            expected_superuser_codes,
         )
 
     def test_permissions_are_combined_across_multiple_roles(self):
@@ -252,7 +257,7 @@ class PermissionResolverTests(APITestCase):
         self.assertEqual(response.data["permissions"], [])
         self.assertEqual(response.data["services"], [])
 
-    def test_superuser_can_load_me_before_permission_seed(self):
+    def test_superuser_can_load_me_without_seed_permissions_command(self):
         owner = Account.objects.create_superuser(
             school_id="unseeded-superuser",
             email="unseeded-superuser@example.com",
@@ -265,11 +270,19 @@ class PermissionResolverTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data["permissions"],
-            ["test.item.edit", "test.item.view"],
+            sorted(
+                Permission.objects.filter(service__is_active=True).values_list(
+                    "permission_code",
+                    flat=True,
+                )
+            ),
         )
         self.assertEqual(
             response.data["services"],
-            [{"service_code": "test", "service_name": "Test Service"}],
+            [
+                {"service_code": "finance", "service_name": "Finance"},
+                {"service_code": "test", "service_name": "Test Service"},
+            ],
         )
 
     def test_seed_permissions_is_repeatable_and_does_not_create_unknown_roles(self):

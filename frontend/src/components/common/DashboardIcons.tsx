@@ -73,3 +73,24 @@ export const CloseIcon = (props: Props) => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
+
+export const ReceiptIcon = (props: Props) => (
+  <svg {...base} {...props}>
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+  </svg>
+);
+
+export const HelpIcon = (props: Props) => (
+  <svg {...base} {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M9.6 9.2a2.4 2.4 0 014.6.8c0 1.6-2.2 2.2-2.2 2.2M12 17h.01" />
+  </svg>
+);
+
+export const PrinterIcon = (props: Props) => (
+  <svg {...base} {...props}>
+    <path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+    <rect x="6" y="14" width="12" height="7" rx="1" />
+  </svg>
+);

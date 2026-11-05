@@ -1,0 +1,109 @@
+/* Finance (student) – extends dashboard.css. Every new class is prefixed fin-. */
+
+.dash-root .fin-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 18px; }
+.dash-root .fin-tab { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--d-card-b); background: var(--d-glass); color: var(--d-text-m); font-size: 12.5px; font-weight: 600; transition: all .15s; }
+.dash-root .fin-tab:hover { background: rgba(255,255,255,.07); color: var(--d-text); }
+.dash-root .fin-tab.is-active { background: var(--d-green-glow); border-color: rgba(74,222,128,.18); color: #5fdd8e; }
+.dash-root .fin-tab-count { min-width: 20px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.08); font-size: 10.5px; text-align: center; }
+.dash-root .fin-tab.is-active .fin-tab-count { background: rgba(39,167,68,.25); }
+
+.dash-root .fin-scroll { max-height: min(540px, 62vh); overflow: auto; }
+.dash-root .fin-scroll .dash-table th { position: sticky; top: 0; z-index: 2; background: #142d1d; }
+.dash-root .fin-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.dash-root .fin-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,.03); }
+.dash-root .fin-scroll::-webkit-scrollbar-thumb { background: rgba(39,167,68,.4); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+.dash-root .fin-empty-cell { padding: 40px 15px !important; text-align: center; font-size: 12.5px; color: var(--d-text-d) !important; }
+
+.dash-root .fin-money.is-ok { color: #5fdd8e; }
+.dash-root .fin-money.is-warn { color: #fbbf24; }
+.dash-root .fin-money.is-bad { color: #f87171; }
+
+.dash-root .fin-icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; border-radius: 6px; cursor: pointer;
+  background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--d-text-m); transition: all .15s; }
+.dash-root .fin-icon-btn.is-pay { border-color: rgba(39,167,68,.25); background: var(--d-ok-bg); color: var(--d-ok-fg); }
+.dash-root .fin-icon-btn.is-pay:hover { background: rgba(39,167,68,.28); transform: translateY(-1px); }
+.dash-root .fin-icon-btn.is-receipt:hover { border-color: #fbbf24; color: #fbbf24; }
+
+/* ---------- Modals (rendered in a portal on document.body, so they define their own tokens) ---------- */
+.fin-portal {
+  --d-card: #0f2918; --d-text: #e8f5ec; --d-text-m: rgba(232,245,236,.6); --d-text-d: rgba(232,245,236,.35);
+  position: fixed; inset: 0; z-index: 600; display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; color: var(--d-text);
+}
+.fin-portal *, .fin-portal *::before, .fin-portal *::after { box-sizing: border-box; }
+.fin-backdrop { position: absolute; inset: 0; border: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(5px); cursor: default; }
+.fin-modal-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  max-width: 100%; max-height: 95vh; padding: 16px; overflow: auto; }
+
+.fin-dialog { width: min(400px, 92vw); padding: 28px 32px; border-radius: 16px; background: var(--d-card);
+  border: 1px solid rgba(255,255,255,.1); box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+.fin-dialog-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.fin-dialog-title { font-size: 16px; font-weight: 700; color: #fff; }
+.fin-dialog-sub { margin-top: 2px; font-size: 11.5px; color: var(--d-text-m); }
+.fin-balance-box { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; padding: 16px 20px; border-radius: 10px;
+  background: rgba(39,167,68,.08); border: 1px solid rgba(39,167,68,.2); }
+.fin-balance-lbl { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--d-text-d); }
+.fin-balance-val { font-size: 26px; font-weight: 800; letter-spacing: -.03em; color: #fff; }
+.fin-dialog-text { margin-bottom: 20px; font-size: 12px; line-height: 1.6; color: var(--d-text-m); }
+.fin-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.fin-ghost-btn { padding: 9px 20px; border-radius: 8px; cursor: pointer; background: transparent; border: 1px solid rgba(255,255,255,.15);
+  color: var(--d-text-m); font: inherit; font-size: 13px; font-weight: 600; }
+.fin-ghost-btn:hover { border-color: #27a744; color: #5fdd8e; }
+.fin-close-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; cursor: pointer;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: var(--d-text-m); }
+.fin-close-btn:hover { background: rgba(239,68,68,.12); color: #f87171; }
+
+.fin-receipt-controls { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 620px; padding: 8px 14px; border-radius: 10px;
+  background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.12); }
+.fin-receipt-title { flex: 1; font-size: 12.5px; font-weight: 600; color: var(--d-text-m); }
+.fin-pdf-btn { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 6px 16px; border-radius: 7px; cursor: pointer;
+  background: rgba(39,167,68,.15); border: 1px solid rgba(39,167,68,.3); color: #5fdd8e; font: inherit; font-size: 12px; font-weight: 600; }
+.fin-pdf-btn:hover { background: rgba(39,167,68,.25); }
+
+/* The receipt "paper": always white, regardless of dashboard theme */
+.fin-receipt-paper { position: relative; flex-shrink: 0; width: 620px; padding: 24px 56px 28px; background: #fff; color: #111;
+  border: 1px solid #ccc; box-shadow: 0 8px 40px rgba(0,0,0,.45); font-family: Arial, Helvetica, sans-serif; }
+.fin-rp-header { margin-bottom: 12px; text-align: center; }
+.fin-rp-org { margin-bottom: 1px; font-size: 12px; font-weight: 700; }
+.fin-rp-campus { font-size: 11px; }
+.fin-rp-divider { margin: 8px 0 6px; border: 0; border-top: 1px solid #555; }
+.fin-rp-type { margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.fin-rp-copy { margin-top: 1px; font-size: 11px; font-style: italic; }
+.fin-rp-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.fin-rp-meta-label { font-size: 11px; }
+.fin-rp-meta-value { display: inline-block; min-width: 140px; padding-bottom: 2px; border-bottom: 1px solid #888; text-align: center; font-size: 12px; font-weight: 700; }
+.fin-rp-meta-value.is-red { color: #c00; }
+.fin-rp-section { margin-bottom: 10px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.fin-rp-field { display: flex; align-items: baseline; margin-bottom: 6px; }
+.fin-rp-label { min-width: 150px; flex-shrink: 0; font-size: 12px; }
+.fin-rp-value { flex: 1; min-height: 18px; padding: 0 0 2px 6px; border-bottom: 1px solid #888; font-size: 12px; font-weight: 700; }
+.fin-rp-signature { display: flex; justify-content: flex-end; margin-top: 24px; }
+.fin-rp-sig-block { min-width: 220px; text-align: center; }
+.fin-rp-sig-label { margin-bottom: 6px; font-size: 11px; }
+.fin-rp-sig-line { display: flex; height: 40px; align-items: flex-end; justify-content: center; padding-bottom: 4px; border-bottom: 1px solid #555; }
+.fin-rp-sig-name { font-size: 12px; font-weight: 700; }
+.fin-rp-sig-caption { margin-top: 2px; font-size: 11px; }
+
+@media (max-width: 768px) {
+  .dash-root .fin-hide-sm { display: none; }
+  .dash-root .fin-tab { padding: 8px 12px; }
+  .fin-dialog { padding: 20px; }
+  .fin-modal-inner { align-items: flex-start; padding: 8px; }
+  .fin-receipt-controls { max-width: 95vw; }
+}
+
+/* Print only the receipt: hide the app, show the portal as normal flow */
+@media print {
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  body > *:not(.fin-portal) { display: none !important; }
+  .fin-portal { position: static !important; display: block !important; background: #fff !important; }
+  .fin-backdrop, .fin-receipt-controls { display: none !important; }
+  .fin-modal-inner { display: block !important; max-height: none !important; padding: 0 !important; overflow: visible !important; }
+  .fin-receipt-paper { margin: 0 auto !important; border: 0 !important; box-shadow: none !important; page-break-inside: avoid;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { margin: 12mm; size: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-root .fin-tab, .dash-root .fin-icon-btn { transition: none; }
+}

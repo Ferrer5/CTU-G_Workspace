@@ -2,7 +2,19 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from accounts.models import Permission, Role, RolePermission, Service
-from accounts.permission_catalog import ALL_ROLES, PERMISSIONS, SERVICES
+from accounts.permission_catalog import (
+    ALL_ROLES,
+    PERMISSIONS,
+    ROLE_ALIASES,
+    SERVICES,
+)
+
+
+def role_name_candidates(role_name):
+    for canonical, aliases in ROLE_ALIASES.items():
+        if role_name == canonical or role_name in aliases:
+            return aliases
+    return (role_name,)
 
 
 class Command(BaseCommand):
@@ -96,7 +108,14 @@ class Command(BaseCommand):
                 continue
 
             for role_name in role_names:
-                role = Role.objects.filter(role_name=role_name).first()
+                role = next(
+                    (
+                        match
+                        for candidate in role_name_candidates(role_name)
+                        if (match := Role.objects.filter(role_name=candidate).first())
+                    ),
+                    None,
+                )
                 if role is None:
                     counts["skipped"] += 1
                     self.stderr.write(self.style.WARNING(
@@ -114,6 +133,17 @@ class Command(BaseCommand):
                 else:
                     counts["skipped"] += 1
                     self.stdout.write(f"Skipped existing grant {role_name} -> {permission.permission_code}.")
+
+        catalog_codes = {item["permission_code"] for item in PERMISSIONS}
+        uncatalogued = Permission.objects.exclude(
+            permission_code__in=catalog_codes
+        ).order_by("permission_code")
+        for permission in uncatalogued.iterator():
+            self.stderr.write(
+                self.style.WARNING(
+                    f"Permission not in catalog (left unchanged): {permission.permission_code}"
+                )
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
