@@ -4,8 +4,11 @@ import { LockIcon } from '../../../components/common/Icons';
 import { CAMPUS_NAME, REGISTER_PATH } from '../../../utils/constants';
 import { scrollToSection } from '../../../utils/scroll';
 import HomeLoginForm from './HomeLoginForm';
+import { useNavigate } from 'react-router-dom';
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+  const registerPath = REGISTER_PATH;
   return (
     <section id="home" className="screen-section scroll-mt-16 relative">
       <div className="mx-auto grid w-full max-w-[1920px] items-center gap-10 px-4 pb-16 pt-12 sm:px-6 md:pb-20 md:pt-16 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:pb-24 lg:pt-20">
@@ -30,8 +33,8 @@ export default function HeroSection() {
           </Reveal>
 
           <Reveal delay={270} className="mt-7 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-            {REGISTER_PATH && (
-              <Button onClick={() => window.location.assign(REGISTER_PATH as string)}>Get Started</Button>
+            {registerPath && (
+              <Button onClick={() => navigate(registerPath)}>Get Started</Button>
             )}
             <Button variant="secondary" onClick={() => scrollToSection('services')}>Explore Services</Button>
           </Reveal>

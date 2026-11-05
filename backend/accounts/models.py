@@ -24,6 +24,8 @@ class AccountManager(BaseUserManager):
     def create_superuser(self, school_id, email=None, password=None, **extra_fields):
         extra_fields["request_status"] = Account.RequestStatus.APPROVED
         extra_fields["is_active"] = True
+        extra_fields["is_staff"] = True
+        extra_fields["is_superuser"] = True
         with transaction.atomic():
             account = self.create_user(
                 school_id=school_id,
@@ -31,16 +33,16 @@ class AccountManager(BaseUserManager):
                 password=password,
                 **extra_fields,
             )
-            admin_role, _ = Role.objects.get_or_create(
-                role_name="Admin",
+            superuser_role, _ = Role.objects.get_or_create(
+                role_name="SuperUser",
                 defaults={"is_active": True},
             )
-            if not admin_role.is_active:
-                admin_role.is_active = True
-                admin_role.save(update_fields=["is_active"])
+            if not superuser_role.is_active:
+                superuser_role.is_active = True
+                superuser_role.save(update_fields=["is_active"])
             AccountRole.objects.get_or_create(
                 account=account,
-                role=admin_role,
+                role=superuser_role,
                 defaults={"assigned_by": None},
             )
         return account
@@ -69,6 +71,8 @@ class Account(AbstractBaseUser):
     school_id = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=255, db_column="password_hash")
     email = models.EmailField(max_length=150, null=True, blank=True, unique=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     requested_role = models.ForeignKey(
         Role,
         on_delete=models.PROTECT,
@@ -102,19 +106,25 @@ class Account(AbstractBaseUser):
             return False
         return self.role_assignments.filter(role__role_name=role_name).exists()
 
-    @property
-    def is_staff(self):
-        return self.is_active and self.has_role("Admin")
-
-    @property
-    def is_superuser(self):
-        return self.is_active and self.has_role("Admin")
-
     def has_perm(self, perm, obj=None):
         return self.is_active and self.is_superuser
 
     def has_module_perms(self, app_label):
         return self.is_active and self.is_superuser
+
+    def has_permission_code(self, permission_code):
+        from accounts.permission_resolver import get_effective_permission_codes
+
+        return permission_code in get_effective_permission_codes(self)
+
+
+class AdminRoleFlagMigrationState(models.Model):
+    account_id = models.IntegerField(primary_key=True)
+    was_staff = models.BooleanField()
+    was_superuser = models.BooleanField()
+
+    class Meta:
+        db_table = "accounts_admin_role_flag_migration_state"
 
 
 class UserProfile(models.Model):

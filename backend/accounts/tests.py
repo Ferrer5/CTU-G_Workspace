@@ -1,22 +1,164 @@
 import re
+from importlib import import_module
 from datetime import timedelta
+from io import StringIO
 
+from django.contrib.admin.sites import site
 from django.core import mail
+from django.core.exceptions import PermissionDenied
+from django.core.management import CommandError
+from django.db import connection
 from django.urls import reverse
 from django.core.cache import cache
 from django.core.management import call_command
-from django.test import override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from accounts.models import AccessAuditLog, Account, AccountRole, Role
+from accounts.models import (
+    AccessAuditLog,
+    Account,
+    AccountRole,
+    AdminRoleFlagMigrationState,
+    Permission,
+    Role,
+    RolePermission,
+    Service,
+)
+from accounts.admin import AccountAdmin, AccountRoleAdmin
+from django.apps import apps
 from accounts.views import (
     VERIFIED_EMAIL_EXPIRY_SESSION_KEY,
     VERIFIED_EMAIL_SESSION_KEY,
     _secret_hash,
 )
 from academics.models import Course, SchoolYear, YearAndSection
+
+
+class AccountManagerTests(TestCase):
+    def test_create_superuser_assigns_superuser_role_and_flags(self):
+        account = Account.objects.create_superuser(
+            school_id="superuser-001",
+            email="superuser@example.com",
+            password="R4nd0m!Passphrase_73",
+        )
+
+        self.assertTrue(account.is_staff)
+        self.assertTrue(account.is_superuser)
+        self.assertTrue(account.has_role("SuperUser"))
+        self.assertFalse(account.has_role("Admin"))
+        self.assertTrue(account.has_perm("accounts.change_account"))
+        self.assertTrue(account.check_password("R4nd0m!Passphrase_73"))
+
+
+class AdminRoleMigrationTests(TestCase):
+    def test_admin_flags_migration_is_idempotent_reversible_and_keeps_roles(self):
+        admin_role = Role.objects.create(role_name="Admin")
+        account = Account.objects.create_user(
+            school_id="legacy-admin",
+            password="R4nd0m!Passphrase_73",
+            is_active=True,
+        )
+        assignment = AccountRole.objects.create(account=account, role=admin_role)
+        migration = import_module("accounts.migrations.0004_preserve_admin_access")
+
+        with connection.schema_editor() as schema_editor:
+            migration.preserve_admin_access(apps, schema_editor)
+            migration.preserve_admin_access(apps, schema_editor)
+
+        account.refresh_from_db()
+        assignment.refresh_from_db()
+        state = AdminRoleFlagMigrationState.objects.get(account_id=account.pk)
+        self.assertTrue(account.is_staff)
+        self.assertTrue(account.is_superuser)
+        self.assertEqual(assignment.role, admin_role)
+        self.assertEqual(AccountRole.objects.filter(account=account).count(), 1)
+        self.assertFalse(state.was_staff)
+        self.assertFalse(state.was_superuser)
+
+        with connection.schema_editor() as schema_editor:
+            migration.restore_admin_flags(apps, schema_editor)
+
+        account.refresh_from_db()
+        assignment.refresh_from_db()
+        self.assertFalse(account.is_staff)
+        self.assertFalse(account.is_superuser)
+        self.assertEqual(assignment.role, admin_role)
+
+
+class SuperuserCommandTests(TestCase):
+    password = "R4nd0m!Passphrase_73"
+
+    def make_account(self, school_id, *, active=True, superuser=False):
+        account = Account.objects.create_user(
+            school_id=school_id,
+            email=f"{school_id}@example.com",
+            password=self.password,
+            is_active=active,
+        )
+        if superuser:
+            role, _ = Role.objects.get_or_create(role_name="SuperUser")
+            AccountRole.objects.create(account=account, role=role)
+            account.is_staff = True
+            account.is_superuser = True
+            account.save(update_fields=["is_staff", "is_superuser"])
+        return account
+
+    def test_promote_superuser_assigns_role_and_flags(self):
+        account = self.make_account("promote-me")
+        output = StringIO()
+
+        call_command("promote_superuser", school_id=account.school_id, stdout=output)
+
+        account.refresh_from_db()
+        self.assertTrue(account.is_staff)
+        self.assertTrue(account.is_superuser)
+        self.assertTrue(account.has_role("SuperUser"))
+        self.assertIn("added role assignment", output.getvalue())
+
+    def test_promote_superuser_refuses_unknown_and_inactive_accounts(self):
+        inactive = self.make_account("inactive", active=False)
+
+        with self.assertRaises(CommandError):
+            call_command("promote_superuser", school_id="unknown")
+        with self.assertRaises(CommandError):
+            call_command("promote_superuser", school_id=inactive.school_id)
+
+    def test_demote_superuser_refuses_last_active_superuser(self):
+        account = self.make_account("only-owner", superuser=True)
+
+        with self.assertRaisesMessage(CommandError, "last active superuser"):
+            call_command("demote_superuser", school_id=account.school_id)
+
+        account.refresh_from_db()
+        self.assertTrue(account.is_superuser)
+        self.assertTrue(account.has_role("SuperUser"))
+
+    def test_demote_superuser_removes_role_and_flags_when_another_remains(self):
+        target = self.make_account("demote-me", superuser=True)
+        self.make_account("keep-owner", superuser=True)
+
+        call_command("demote_superuser", school_id=target.school_id, stdout=StringIO())
+
+        target.refresh_from_db()
+        self.assertFalse(target.is_staff)
+        self.assertFalse(target.is_superuser)
+        self.assertFalse(target.has_role("SuperUser"))
+
+    def test_privileged_report_lists_roles_and_mismatches(self):
+        account = self.make_account("mismatched")
+        admin_role, _ = Role.objects.get_or_create(role_name="Admin")
+        AccountRole.objects.create(account=account, role=admin_role)
+        superuser_role, _ = Role.objects.get_or_create(role_name="SuperUser")
+        AccountRole.objects.create(account=account, role=superuser_role)
+        output = StringIO()
+
+        call_command("report_privileged_accounts", stdout=output)
+
+        self.assertIn("mismatched", output.getvalue())
+        self.assertIn("roles=Admin,SuperUser", output.getvalue())
+        self.assertIn("SuperUser role and flags disagree", output.getvalue())
 
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
@@ -50,6 +192,21 @@ class AuthenticationApiTests(APITestCase):
             is_active=True,
         )
         AccountRole.objects.create(account=self.admin, role=self.admin_role)
+        accounts_service = Service.objects.create(
+            service_code="accounts",
+            service_name="Accounts",
+        )
+        registration_review = Permission.objects.create(
+            service=accounts_service,
+            permission_code="accounts.registration.review",
+            permission_name="Review registrations",
+            module_name="registration",
+            action_name="review",
+        )
+        RolePermission.objects.create(
+            role=self.admin_role,
+            permission=registration_review,
+        )
 
     def registration_payload(self, **overrides):
         payload = {
@@ -529,6 +686,79 @@ class AuthenticationApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         target.refresh_from_db()
         self.assertEqual(target.request_status, Account.RequestStatus.PENDING)
+
+    def test_admin_role_does_not_grant_django_admin_flags(self):
+        self.assertTrue(self.admin.has_role("Admin"))
+        self.assertFalse(self.admin.is_staff)
+        self.assertFalse(self.admin.is_superuser)
+
+    def test_admin_cannot_approve_admin_or_superuser_role(self):
+        superuser_role, _ = Role.objects.get_or_create(role_name="SuperUser")
+        for index, role in enumerate((self.admin_role, superuser_role)):
+            target = self.make_account(
+                school_id=f"privileged-target-{index}",
+                email=f"privileged-target-{index}@example.com",
+                requested_role=role,
+            )
+            self.client.force_authenticate(user=self.admin)
+
+            response = self.client.post(
+                reverse(
+                    "admin-registration-approve",
+                    kwargs={"account_id": target.account_id},
+                ),
+                {},
+                format="json",
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertFalse(
+                AccountRole.objects.filter(account=target, role=role).exists()
+            )
+
+    def test_account_cannot_approve_its_own_role_change(self):
+        self.admin.request_status = Account.RequestStatus.PENDING
+        self.admin.requested_role = self.admin_role
+        self.admin.save(update_fields=["request_status", "requested_role"])
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.post(
+            reverse(
+                "admin-registration-approve",
+                kwargs={"account_id": self.admin.account_id},
+            ),
+            {},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_django_admin_rejects_non_superuser_privileged_role_assignment(self):
+        target = self.make_account(
+            school_id="admin-target",
+            email="admin-target@example.com",
+        )
+        request = RequestFactory().post("/admin/accounts/accountrole/add/")
+        request.user = self.admin
+        model_admin = AccountRoleAdmin(AccountRole, site)
+        assignment = AccountRole(account=target, role=self.admin_role)
+
+        with self.assertRaises(PermissionDenied):
+            model_admin.save_model(request, assignment, None, False)
+
+    def test_django_admin_rejects_self_role_changes(self):
+        request = RequestFactory().post("/admin/accounts/accountrole/add/")
+        request.user = self.admin
+        role_admin = AccountRoleAdmin(AccountRole, site)
+        self_assignment = AccountRole(account=self.admin, role=self.admin_role)
+
+        with self.assertRaises(PermissionDenied):
+            role_admin.save_model(request, self_assignment, None, False)
+
+        account_admin = AccountAdmin(Account, site)
+        self.admin.requested_role = self.admin_role
+        with self.assertRaises(PermissionDenied):
+            account_admin.save_model(request, self.admin, None, True)
 
     def test_admin_approval_writes_audit_and_grants_requested_role(self):
         target = self.make_account()

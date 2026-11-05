@@ -1,0 +1,17 @@
+export const PERMISSIONS = {
+  accountsRegistrationReview: 'accounts.registration.review',
+  accountsRoleManage: 'accounts.role.manage',
+  accountsProfileViewOwn: 'accounts.profile.view_own',
+  academicsProfileViewOwn: 'academics.profile.view_own',
+  clearanceViewOwn: 'clearance.request.view_own',
+  clearanceCreate: 'clearance.request.create',
+  clearanceViewAll: 'clearance.request.view_all',
+  clearanceApprove: 'clearance.request.approve',
+  financeTransactionView: 'finance.transaction.view',
+  financeTransactionCreate: 'finance.transaction.create',
+  financeReportView: 'finance.report.view',
+  groupRatingSheetViewOwn: 'group_rating.sheet.view_own',
+  groupRatingSheetSubmit: 'group_rating.sheet.submit',
+  groupRatingCriteriaManage: 'group_rating.criteria.manage',
+  announcementsPostView: 'announcements.post.view',
+} as const;

@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
 
+from accounts.permissions import PRIVILEGED_ROLE_NAMES, may_assign_role
 from accounts.models import (
     AccessAuditLog,
     Account,
@@ -47,6 +49,20 @@ class AccountAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+    def save_model(self, request, obj, form, change):
+        if change:
+            previous = Account.objects.get(pk=obj.pk)
+            if (
+                previous.requested_role_id != obj.requested_role_id
+                and not may_assign_role(
+                    request.user,
+                    obj,
+                    obj.requested_role.role_name if obj.requested_role_id else "",
+                )
+            ):
+                raise PermissionDenied("You cannot change this account's requested role.")
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -79,6 +95,42 @@ class PermissionAdmin(admin.ModelAdmin):
 class AccountRoleAdmin(admin.ModelAdmin):
     list_display = ("account_role_id", "account", "role", "assigned_by", "assigned_at")
     search_fields = ("account__school_id", "role__role_name")
+    actions = None
+
+    def save_model(self, request, obj, form, change):
+        if not may_assign_role(request.user, obj.account, obj.role.role_name):
+            raise PermissionDenied("You cannot assign this role to this account.")
+        if change:
+            previous_role = AccountRole.objects.get(pk=obj.pk).role
+            if (
+                previous_role.role_name in PRIVILEGED_ROLE_NAMES
+                and not request.user.has_role("SuperUser")
+            ):
+                raise PermissionDenied("Only a SuperUser can change a privileged role.")
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        if obj.account_id == request.user.pk:
+            raise PermissionDenied("You cannot change your own role.")
+        if obj.role.role_name in PRIVILEGED_ROLE_NAMES and not request.user.has_role("SuperUser"):
+            raise PermissionDenied("Only a SuperUser can remove a privileged role.")
+        super().delete_model(request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and obj.account_id == request.user.pk:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.account_id == request.user.pk:
+            return False
+        if (
+            obj is not None
+            and obj.role.role_name in PRIVILEGED_ROLE_NAMES
+            and not request.user.has_role("SuperUser")
+        ):
+            return False
+        return super().has_delete_permission(request, obj)
 
 
 @admin.register(RolePermission)

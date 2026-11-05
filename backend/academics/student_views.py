@@ -1,10 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.permissions import HasPermission
 from academics.models import AcademicProfile
 
 
 class MyAcademicProfileView(APIView):
+    permission_classes = [HasPermission("academics.profile.view_own")]
+
     def get(self, request):
         profile = getattr(request.user, "profile", None)
         academic = (

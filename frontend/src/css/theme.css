@@ -33,6 +33,7 @@
   --field-bg: rgba(255, 255, 255, 0.70); --field-border: rgba(20, 83, 45, 0.15);
   --field-focus: #15803d; --field-ring: rgba(134, 239, 172, 0.55);
   --placeholder: #9ca3af; --autofill-bg: #f1f8f3;
+  --option-bg: #ffffff;
 
   --pill-bg: rgba(255, 255, 255, 0.50); --pill-border: rgba(22, 101, 52, 0.30); --pill-fg: #14532d;
   --notice-bg: #fffbeb; --notice-fg: #92400e;
@@ -69,6 +70,7 @@ html.dark {
   --field-bg: rgba(255, 255, 255, 0.08); --field-border: rgba(255, 255, 255, 0.20);
   --field-focus: #4ade80; --field-ring: rgba(74, 222, 128, 0.30);
   --placeholder: #86a08f; --autofill-bg: #1b4a2f;
+  --option-bg: #143823;
 
   --pill-bg: rgba(255, 255, 255, 0.10); --pill-border: rgba(255, 255, 255, 0.22); --pill-fg: #c6f7d5;
   --notice-bg: rgba(251, 191, 36, 0.12); --notice-fg: #fcd34d;
@@ -97,6 +99,7 @@ html.dark.theme-black {
 
   --field-bg: rgba(255, 255, 255, 0.05); --field-border: rgba(255, 255, 255, 0.14);
   --placeholder: #707070; --autofill-bg: #0e0e0e;
+  --option-bg: #0b0b0b;
 
   --pill-bg: rgba(255, 255, 255, 0.06); --pill-border: rgba(255, 255, 255, 0.16);
   --nav-hover: rgba(255, 255, 255, 0.08); --menu-bg: rgba(0, 0, 0, 0.97);
@@ -213,6 +216,7 @@ html.theme-transition *::after {
 /* ---------- Form fields ---------- */
 .field { background: var(--field-bg); border: 1px solid var(--field-border); color: var(--fg-strong);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
+.field option { background-color: var(--option-bg); color: var(--fg-strong); }
 .field::placeholder { color: var(--placeholder); }
 .field:focus { outline: none; border-color: var(--field-focus); box-shadow: 0 0 0 3px var(--field-ring); }
 .field-error { border-color: var(--fg-error); }

@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
 import ThemeToggle from '../common/ThemeToggle';
 import { CloseIcon, MenuIcon } from '../common/Icons';
@@ -20,6 +21,9 @@ const NAV_ITEMS = [
 const NAV_IDS = NAV_ITEMS.map((item) => item.id);
 
 export default function Navbar() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const onHome = pathname === '/';
   const [open, setOpen] = useState(false);
   const { active, activate } = useActiveSection(NAV_IDS);
   const { scrolled, progressRef } = useScrollHeader();
@@ -43,18 +47,29 @@ export default function Navbar() {
   }, [open]);
 
   const go = (id: string) => {
-    activate(id);
     setOpen(false);
+    if (!onHome) {
+      navigate('/', { state: { scrollTo: id } });
+      return;
+    }
+    activate(id);
     scrollToSection(id);
   };
 
   const signIn = () => {
     setOpen(false);
+    if (!onHome) {
+      navigate('/', { state: { scrollTo: 'home', focusLogin: true } });
+      return;
+    }
     focusLoginForm();
   };
 
   const getStarted = () => {
-    if (REGISTER_PATH) window.location.assign(REGISTER_PATH);
+    setOpen(false);
+    if (REGISTER_PATH) {
+      navigate(REGISTER_PATH);
+    }
   };
 
   return (
@@ -74,7 +89,7 @@ export default function Navbar() {
               key={item.id}
               type="button"
               onClick={() => go(item.id)}
-              aria-current={active === item.id ? 'page' : undefined}
+              aria-current={onHome && active === item.id ? 'page' : undefined}
               className="nav-link rounded-md px-2 py-2 text-sm font-medium xl:px-3"
             >
               {item.label}
@@ -111,7 +126,7 @@ export default function Navbar() {
                 key={item.id}
                 type="button"
                 onClick={() => go(item.id)}
-                aria-current={active === item.id ? 'page' : undefined}
+                aria-current={onHome && active === item.id ? 'page' : undefined}
                 className="nav-link rounded-lg px-3 py-2.5 text-left text-sm font-medium"
               >
                 {item.label}
@@ -133,4 +148,3 @@ export default function Navbar() {
     </header>
   );
 }
-

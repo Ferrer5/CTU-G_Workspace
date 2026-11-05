@@ -1,0 +1,140 @@
+"""Canonical permission catalog. Keep frontend/src/permissions.ts in sync."""
+
+ALL_ROLES = "*"
+
+BASELINE_PERMISSIONS = {
+    "accounts.profile.view_own",
+    "announcements.post.view",
+}
+
+SERVICES = [
+    {"service_code": "accounts", "service_name": "Accounts"},
+    {"service_code": "academics", "service_name": "Academics"},
+    {"service_code": "clearance", "service_name": "Clearance"},
+    {"service_code": "finance", "service_name": "Finance"},
+    {"service_code": "group_rating", "service_name": "Group Rating"},
+    {"service_code": "announcements", "service_name": "Announcements"},
+]
+
+PERMISSIONS = [
+    {
+        "permission_code": "accounts.registration.review",
+        "permission_name": "Review registrations",
+        "module_name": "registration",
+        "action_name": "review",
+        "description": "Review and decide account registration requests.",
+        "default_roles": ["Admin", "SuperUser"],
+    },
+    {
+        "permission_code": "accounts.role.manage",
+        "permission_name": "Manage roles",
+        "module_name": "role",
+        "action_name": "manage",
+        "description": "Manage privileged account roles.",
+        "default_roles": ["SuperUser"],
+    },
+    {
+        "permission_code": "accounts.profile.view_own",
+        "permission_name": "View own profile",
+        "module_name": "profile",
+        "action_name": "view_own",
+        "description": "View the signed-in user's profile.",
+        "default_roles": [ALL_ROLES],
+    },
+    {
+        "permission_code": "academics.profile.view_own",
+        "permission_name": "View own academic profile",
+        "module_name": "profile",
+        "action_name": "view_own",
+        "description": "View the signed-in user's academic profile.",
+        "default_roles": ["Student"],
+    },
+    {
+        "permission_code": "clearance.request.view_own",
+        "permission_name": "View own clearance requests",
+        "module_name": "request",
+        "action_name": "view_own",
+        "description": "View the signed-in user's clearance requests.",
+        "default_roles": ["Student"],
+    },
+    {
+        "permission_code": "clearance.request.create",
+        "permission_name": "Create clearance requests",
+        "module_name": "request",
+        "action_name": "create",
+        "description": "Create clearance requests.",
+        "default_roles": ["Student"],
+    },
+    {
+        "permission_code": "clearance.request.view_all",
+        "permission_name": "View all clearance requests",
+        "module_name": "request",
+        "action_name": "view_all",
+        "description": "View clearance requests across accounts.",
+        "default_roles": ["Admin", "SuperUser", "Class Adviser", "Proffesor"],
+    },
+    {
+        "permission_code": "clearance.request.approve",
+        "permission_name": "Approve clearance requests",
+        "module_name": "request",
+        "action_name": "approve",
+        "description": "Approve clearance requests.",
+        "default_roles": ["Admin", "SuperUser", "Class Adviser", "Proffesor"],
+    },
+    {
+        "permission_code": "finance.transaction.view",
+        "permission_name": "View transactions",
+        "module_name": "transaction",
+        "action_name": "view",
+        "description": "View finance transactions.",
+        "default_roles": ["Treasurer", "Assistant Treasurer"],
+    },
+    {
+        "permission_code": "finance.transaction.create",
+        "permission_name": "Create transactions",
+        "module_name": "transaction",
+        "action_name": "create",
+        "description": "Create finance transactions.",
+        "default_roles": ["Treasurer", "Assistant Treasurer"],
+    },
+    {
+        "permission_code": "finance.report.view",
+        "permission_name": "View finance reports",
+        "module_name": "report",
+        "action_name": "view",
+        "description": "View finance reports.",
+        "default_roles": ["Treasurer", "Assistant Treasurer", "Admin"],
+    },
+    {
+        "permission_code": "group_rating.sheet.view_own",
+        "permission_name": "View own group rating sheet",
+        "module_name": "sheet",
+        "action_name": "view_own",
+        "description": "View the signed-in user's group rating sheet.",
+        "default_roles": ["Student"],
+    },
+    {
+        "permission_code": "group_rating.sheet.submit",
+        "permission_name": "Submit group ratings",
+        "module_name": "sheet",
+        "action_name": "submit",
+        "description": "Submit group ratings.",
+        "default_roles": ["Student"],
+    },
+    {
+        "permission_code": "group_rating.criteria.manage",
+        "permission_name": "Manage rating criteria",
+        "module_name": "criteria",
+        "action_name": "manage",
+        "description": "Manage group rating criteria.",
+        "default_roles": ["Proffesor"],
+    },
+    {
+        "permission_code": "announcements.post.view",
+        "permission_name": "View announcements",
+        "module_name": "post",
+        "action_name": "view",
+        "description": "View announcements.",
+        "default_roles": [ALL_ROLES],
+    },
+]

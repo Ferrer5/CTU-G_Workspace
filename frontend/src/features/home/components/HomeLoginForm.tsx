@@ -8,8 +8,7 @@ import { REGISTER_PATH } from '../../../utils/constants';
 import { GLASS } from '../../../utils/styles';
 import { getLoginErrorMessage } from '../../../services/authService';
 import { useAuth } from '../../../hooks/useAuth';
-import { getDashboardPath } from '../../../utils/roleRedirect';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export interface LoginCredentials {
   schoolId: string;
@@ -29,7 +28,7 @@ interface FormErrors {
 }
 
 export default function HomeLoginForm({ onSubmit }: HomeLoginFormProps) {
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [schoolId, setSchoolId] = useState('');
   const [password, setPassword] = useState('');
@@ -61,14 +60,8 @@ export default function HomeLoginForm({ onSubmit }: HomeLoginFormProps) {
       if (onSubmit) {
         await onSubmit({ schoolId: schoolId.trim(), password });
       } else {
-        const user = await login(schoolId.trim(), password);
-        const dashboardPath = getDashboardPath(user.roles);
-        if (dashboardPath) {
-          navigate(dashboardPath, { replace: true });
-        } else {
-          await logout().catch(() => undefined);
-          setNotice('Your account does not have a dashboard yet.');
-        }
+        await login(schoolId.trim(), password);
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       setNotice(getLoginErrorMessage(error));
@@ -130,7 +123,7 @@ export default function HomeLoginForm({ onSubmit }: HomeLoginFormProps) {
       {REGISTER_PATH && (
         <p className="fg-muted mt-5 text-center text-xs">
           Don’t have an account?{' '}
-          <a href={REGISTER_PATH} className="link-accent font-medium">Get Started</a>
+          <Link to={REGISTER_PATH} className="link-accent font-medium">Get Started</Link>
         </p>
       )}
     </Reveal>

@@ -13,13 +13,24 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.email import send_plain_text_email
-from accounts.models import AccessAuditLog, Account, AccountRole, Role, UserProfile
-from accounts.permissions import IsAdminRole
+from accounts.models import (
+    AccessAuditLog,
+    Account,
+    AccountRole,
+    Role,
+    Service,
+    UserProfile,
+)
+from accounts.permission_resolver import (
+    get_effective_permission_codes,
+    get_permission_explanations,
+)
+from accounts.permissions import HasPermission, may_assign_role
 from accounts.serializers import (
     EmailCodeRequestSerializer,
     EmailCodeVerifySerializer,
@@ -439,6 +450,8 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         account = request.user
         try:
@@ -458,12 +471,52 @@ class MeView(APIView):
                     account.role_assignments.order_by("role__role_name")
                     .values_list("role__role_name", flat=True)
                 ),
+                "permissions": sorted(get_effective_permission_codes(account)),
+                "services": services_for_account(
+                    get_effective_permission_codes(account)
+                ),
+            }
+        )
+
+
+def services_for_account(permission_codes):
+    if not permission_codes:
+        return []
+    service_codes = {code.partition(".")[0] for code in permission_codes}
+    return list(
+        Service.objects.filter(
+            is_active=True,
+            service_code__in=service_codes,
+        )
+        .order_by("service_name")
+        .values("service_code", "service_name")
+        .distinct()
+    )
+
+
+class EffectivePermissionsView(APIView):
+    permission_classes = [HasPermission("accounts.role.manage")]
+
+    def get(self, request, school_id):
+        account = get_object_or_404(
+            Account.objects.prefetch_related(
+                "role_assignments__role",
+                "direct_permissions__permission__service",
+            ),
+            school_id=school_id,
+        )
+        return Response(
+            {
+                "school_id": account.school_id,
+                "is_active": account.is_active,
+                "request_status": account.request_status,
+                "permissions": get_permission_explanations(account),
             }
         )
 
 
 class AdminRegistrationListView(APIView):
-    permission_classes = [IsAdminRole]
+    permission_classes = [HasPermission("accounts.registration.review")]
 
     def get(self, request):
         registration_status = request.query_params.get(
@@ -513,7 +566,7 @@ class AdminRegistrationListView(APIView):
 
 
 class RegistrationDecisionView(APIView):
-    permission_classes = [IsAdminRole]
+    permission_classes = [HasPermission("accounts.registration.review")]
 
     def get_target(self, account_id):
         return get_object_or_404(
@@ -534,6 +587,15 @@ class ApproveRegistrationView(RegistrationDecisionView):
                 return Response(
                     {"detail": "The registration has no requested role."},
                     status=status.HTTP_409_CONFLICT,
+                )
+            if not may_assign_role(
+                request.user,
+                account,
+                account.requested_role.role_name,
+            ):
+                return Response(
+                    {"detail": "You cannot assign this role to this account."},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             old_value = {

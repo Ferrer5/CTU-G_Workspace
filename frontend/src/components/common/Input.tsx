@@ -6,16 +6,18 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   error?: string;
   rightAdornment?: ReactNode;
+  requiredMark?: boolean;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, id, error, rightAdornment, className = '', ...rest },
+  { label, id, error, rightAdornment, requiredMark = false, className = '', ...rest },
   ref,
 ) {
   return (
     <div>
       <label htmlFor={id} className="fg-body mb-1.5 block text-xs font-medium">
         {label}
+        {requiredMark && <span className="fg-error ml-0.5" aria-hidden="true">*</span>}
       </label>
       <div className="relative">
         <input

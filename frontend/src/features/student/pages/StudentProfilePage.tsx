@@ -21,12 +21,14 @@ export default function StudentProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [academic, setAcademic] = useState<StudentAcademicProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const canViewAcademic = Boolean(user?.permissions.includes('academics.profile.view_own'));
+  const [loading, setLoading] = useState(canViewAcademic);
   const [error, setError] = useState('');
   const name = fullName(user?.first_name ?? null, user?.middle_name ?? null, user?.last_name ?? null, user?.suffix_name ?? null);
   const avatarInitials = initials(user?.first_name ?? null, user?.last_name ?? null, user?.school_id ?? 'ST');
 
   useEffect(() => {
+    if (!canViewAcademic) return;
     let active = true;
     fetchAcademicProfile()
       .then((profile) => {
@@ -34,7 +36,7 @@ export default function StudentProfilePage() {
       })
       .catch((requestError: unknown) => {
         if (!active) return;
-        if (requestError instanceof ApiError && (requestError.status === 401 || requestError.status === 403)) {
+        if (requestError instanceof ApiError && requestError.status === 401) {
           void logout()
             .catch(() => undefined)
             .finally(() => navigate('/', { replace: true }));
@@ -49,7 +51,7 @@ export default function StudentProfilePage() {
     return () => {
       active = false;
     };
-  }, [logout, navigate]);
+  }, [canViewAcademic, logout, navigate]);
 
   return (
     <section className="dash-page">
@@ -64,7 +66,7 @@ export default function StudentProfilePage() {
         <div className="dash-profile-hero">
           <div className="dash-avatar" aria-hidden="true">{avatarInitials}</div>
           <h2 className="dash-profile-name">{name}</h2>
-          <div className="dash-profile-role">Student</div>
+          <div className="dash-profile-role">{user?.roles.join(', ') || 'No role assigned'}</div>
         </div>
         <div className="dash-fields">
           <div className="dash-field">
@@ -75,9 +77,9 @@ export default function StudentProfilePage() {
             <span className="dash-field-label">Email</span>
             <span className="dash-field-value">{user?.email || '—'}</span>
           </div>
-          {loading && <div className="dash-field-value" role="status">Loading academic information…</div>}
-          {error && <div className="dash-field-value" role="alert">{error}</div>}
-          {academic && (
+          {canViewAcademic && loading && <div className="dash-field-value" role="status">Loading academic information…</div>}
+          {canViewAcademic && error && <div className="dash-field-value" role="alert">{error}</div>}
+          {canViewAcademic && academic && (
             <>
               <div className="dash-field">
                 <span className="dash-field-label">Course</span>

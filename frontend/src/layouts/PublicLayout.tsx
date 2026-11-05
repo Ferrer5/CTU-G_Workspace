@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import '../css/theme.css';
 import ThemeProvider from '../contexts/ThemeProvider';
 import { useSectionPaging } from '../hooks/useSectionPaging';
+import { useScrollOnArrival } from '../hooks/useScrollOnArrival';
 import { PAGE_SECTION_IDS } from '../utils/constants';
 import Navbar from '../components/navigation/Navbar';
 import Footer from '../components/navigation/Footer';
@@ -10,6 +11,7 @@ import campusImage from '../assets/campus-building.jpg';
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   useSectionPaging(PAGE_SECTION_IDS);
+  useScrollOnArrival();
   return (
     <ThemeProvider>
       <div className="app-bg relative isolate flex min-h-screen flex-col overflow-x-clip">
