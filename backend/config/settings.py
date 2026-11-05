@@ -53,6 +53,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts.apps.AccountsConfig',
     'academics.apps.AcademicsConfig',
+    'finance.apps.FinanceConfig',
+    'clearance.apps.ClearanceConfig',
+    'notifications.apps.NotificationsConfig',
+    'group_rating.apps.GroupRatingConfig',
 ]
 
 
