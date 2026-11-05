@@ -6,6 +6,10 @@ import Reveal from '../../../components/common/Reveal';
 import { EyeIcon, EyeOffIcon } from '../../../components/common/Icons';
 import { REGISTER_PATH } from '../../../utils/constants';
 import { GLASS } from '../../../utils/styles';
+import { getLoginErrorMessage } from '../../../services/authService';
+import { useAuth } from '../../../hooks/useAuth';
+import { getDashboardPath } from '../../../utils/roleRedirect';
+import { useNavigate } from 'react-router-dom';
 
 export interface LoginCredentials {
   schoolId: string;
@@ -14,8 +18,7 @@ export interface LoginCredentials {
 
 interface HomeLoginFormProps {
   /**
-   * Called with validated credentials. Not provided yet: connect this to
-   * authService (Django REST API) in the authentication phase.
+   * Optional override for callers that supply their own sign-in handler.
    */
   onSubmit?: (credentials: LoginCredentials) => Promise<void>;
 }
@@ -26,6 +29,8 @@ interface FormErrors {
 }
 
 export default function HomeLoginForm({ onSubmit }: HomeLoginFormProps) {
+  const { login, logout } = useAuth();
+  const navigate = useNavigate();
   const [schoolId, setSchoolId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -50,17 +55,23 @@ export default function HomeLoginForm({ onSubmit }: HomeLoginFormProps) {
     setNotice('');
     if (Object.keys(found).length > 0) return;
 
-    if (!onSubmit) {
-      setNotice('Sign-in is not available yet. This form will be connected in a later phase.');
-      return;
-    }
-
     submitting.current = true;
     setLoading(true);
     try {
-      await onSubmit({ schoolId: schoolId.trim(), password });
-    } catch {
-      setNotice('Sign-in could not be completed. Please try again.');
+      if (onSubmit) {
+        await onSubmit({ schoolId: schoolId.trim(), password });
+      } else {
+        const user = await login(schoolId.trim(), password);
+        const dashboardPath = getDashboardPath(user.roles);
+        if (dashboardPath) {
+          navigate(dashboardPath, { replace: true });
+        } else {
+          await logout().catch(() => undefined);
+          setNotice('Your account does not have a dashboard yet.');
+        }
+      }
+    } catch (error) {
+      setNotice(getLoginErrorMessage(error));
     } finally {
       submitting.current = false;
       setLoading(false);
