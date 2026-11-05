@@ -8,6 +8,7 @@ import {
 } from '../../../components/common/DashboardIcons';
 import { useAuth } from '../../../hooks/useAuth';
 import usePermissions from '../../../hooks/usePermissions';
+import { PERMISSIONS } from '../../../permissions';
 import { BRAND_NAME } from '../../../utils/constants';
 import type { DashboardSidebarProps } from '../../../layouts/DashboardLayout';
 import { dashboardNavigation } from '../dashboardConfig';
@@ -18,10 +19,12 @@ function displayName(first: string | null, last: string | null) {
 
 export default function DashboardSidebar({ open, onClose }: DashboardSidebarProps) {
   const { user, logout } = useAuth();
-  const { hasAnyPermission } = usePermissions();
+  const { hasAnyPermission, hasPermission } = usePermissions();
   const navigate = useNavigate();
   const navItems = dashboardNavigation.filter(
-    (item) => item.permissions.length === 0 || hasAnyPermission(item.permissions),
+    (item) =>
+      (item.path !== '/dashboard' || !hasPermission(PERMISSIONS.financePaymentViewOwn)) &&
+      (item.permissions.length === 0 || hasAnyPermission(item.permissions)),
   );
   const name = displayName(user?.first_name ?? null, user?.last_name ?? null);
   const initials = `${user?.first_name?.trim().charAt(0) ?? ''}${user?.last_name?.trim().charAt(0) ?? ''}`
@@ -52,7 +55,7 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
         </div>
       </div>
       <nav aria-label="Dashboard navigation">
-        <div className="dash-sb-label">Workspace</div>
+        <div className="dash-sb-label">Services</div>
         {navItems.map((item, index) => (
           <NavLink
             key={item.path}

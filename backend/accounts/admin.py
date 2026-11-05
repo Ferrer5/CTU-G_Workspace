@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
 from accounts.permissions import PRIVILEGED_ROLE_NAMES, may_assign_role
@@ -13,6 +14,8 @@ from accounts.models import (
     Service,
     UserProfile,
 )
+
+admin.site.unregister(Group)
 
 
 @admin.register(Account)
