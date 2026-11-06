@@ -1,0 +1,30 @@
+.dash-root .fin-workspace { display: flex; flex-direction: column; gap: 18px; }
+.dash-root .fin-subheader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.dash-root .fin-live { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; background: rgba(39,167,68,.12); border: 1px solid rgba(39,167,68,.18); color: #5fdd8e; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.dash-root .fin-live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,.8); }
+.dash-root .fin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.dash-root .fin-card { padding: 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); background: rgba(15,41,24,.95); box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+.dash-root .fin-table { width: 100%; border-collapse: collapse; }
+.dash-root .fin-table th, .dash-root .fin-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.08); text-align: left; font-size: 12px; }
+.dash-root .fin-table th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(232,245,236,.52); }
+.dash-root .fin-muted { color: rgba(232,245,236,.68); }
+.dash-root .fin-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: 0; background: linear-gradient(135deg, #1a7a4a, #27a744); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.dash-root .fin-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); color: var(--d-text); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.dash-root .fin-btn-danger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: #fca5a5; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.dash-root .fin-tablist { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 18px; }
+.dash-root .fin-tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); color: var(--d-text-m); cursor: pointer; font-weight: 600; }
+.dash-root .fin-tab.is-active { background: rgba(39,167,68,.12); border-color: rgba(74,222,128,.2); color: #5fdd8e; }
+.dash-root .fin-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dash-root .fin-field { display: flex; flex-direction: column; gap: 7px; }
+.dash-root .fin-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(232,245,236,.58); }
+.dash-root .fin-input, .dash-root .fin-select, .dash-root .fin-textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: rgba(6,12,8,.45); color: var(--d-text); }
+.dash-root .fin-textarea { min-height: 100px; resize: vertical; }
+.dash-root .fin-summary { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 0; }
+.dash-root .fin-stack { display: flex; flex-direction: column; gap: 12px; }
+.dash-root .fin-chart { display: flex; align-items: end; gap: 8px; height: 160px; padding: 20px 10px 0; }
+.dash-root .fin-chart-bar { flex: 1; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, #5fdd8e, #1a7a4a); min-height: 40px; }
+.dash-root .fin-badge-card { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(255,255,255,.04); color: var(--d-text); }
+.dash-root .dash-sb-group { margin: 2px 0 4px 14px; display: flex; flex-direction: column; }
+.dash-root .dash-nav-sub { margin-left: 10px; padding-left: 12px; }
+@media (max-width: 980px) { .dash-root .fin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .dash-root .fin-grid, .dash-root .fin-form-grid { grid-template-columns: 1fr; } }

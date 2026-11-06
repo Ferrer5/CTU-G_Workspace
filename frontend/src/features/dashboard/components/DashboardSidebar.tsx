@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import logo from '../../../assets/logo.png';
 import {
@@ -11,6 +12,7 @@ import usePermissions from '../../../hooks/usePermissions';
 import { PERMISSIONS } from '../../../permissions';
 import { BRAND_NAME } from '../../../utils/constants';
 import type { DashboardSidebarProps } from '../../../layouts/DashboardLayout';
+import { financeNavItems } from '../../finance/financeNav';
 import { dashboardNavigation } from '../dashboardConfig';
 
 function displayName(first: string | null, last: string | null) {
@@ -21,10 +23,16 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
   const { user, logout } = useAuth();
   const { hasAnyPermission, hasPermission } = usePermissions();
   const navigate = useNavigate();
-  const navItems = dashboardNavigation.filter(
-    (item) =>
-      (item.path !== '/dashboard' || !hasPermission(PERMISSIONS.financePaymentViewOwn)) &&
-      (item.permissions.length === 0 || hasAnyPermission(item.permissions)),
+  const navItems = dashboardNavigation.filter((item) => {
+    // NOTE: the existing filter hides "Overview" for financePaymentViewOwn users.
+    // Keep that behaviour; treasurer users should land in the Finance workspace.
+    if (item.path === '/dashboard' && hasPermission(PERMISSIONS.financePaymentViewOwn)) {
+      return false;
+    }
+    return item.permissions.length === 0 || hasAnyPermission(item.permissions);
+  });
+  const financeLinks = financeNavItems.filter(
+    (item) => item.permissions.length === 0 || hasAnyPermission(item.permissions),
   );
   const name = displayName(user?.first_name ?? null, user?.last_name ?? null);
   const initials = `${user?.first_name?.trim().charAt(0) ?? ''}${user?.last_name?.trim().charAt(0) ?? ''}`
@@ -57,16 +65,33 @@ export default function DashboardSidebar({ open, onClose }: DashboardSidebarProp
       <nav aria-label="Dashboard navigation">
         <div className="dash-sb-label">Services</div>
         {navItems.map((item, index) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/dashboard'}
-            onClick={onClose}
-            className={({ isActive }) => `dash-nav-item ${isActive ? 'is-active' : ''}`}
-          >
-            {index === 0 ? <GridIcon /> : item.label === 'My Profile' ? <UserIcon /> : <GridIcon />}
-            {item.label}
-          </NavLink>
+          <Fragment key={item.path}>
+            <NavLink
+              to={item.path}
+              end={item.path === '/dashboard'}
+              onClick={onClose}
+              className={({ isActive }) => `dash-nav-item ${isActive ? 'is-active' : ''}`}
+            >
+              {index === 0 ? <GridIcon /> : item.label === 'My Profile' ? <UserIcon /> : <GridIcon />}
+              {item.label}
+            </NavLink>
+            {item.path === '/dashboard/finance' && financeLinks.length > 0 && (
+              <div className="dash-sb-group">
+                {financeLinks.map((link) => (
+                  <NavLink
+                    key={link.path}
+                    to={link.path}
+                    end={link.path === '/dashboard/finance'}
+                    onClick={onClose}
+                    className={({ isActive }) => `dash-nav-item dash-nav-sub ${isActive ? 'is-active' : ''}`}
+                  >
+                    <link.Icon />
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </Fragment>
         ))}
       </nav>
       <div className="dash-spacer" />
